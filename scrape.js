@@ -1,45 +1,35 @@
 const { chromium } = require('playwright');
 
-async function scrapeSums() {
+(async () => {
   const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
   let grandTotal = 0;
-  
-  const urls = [
-    'https://sanand0.github.io/tdsdata/js_table/?seed=82',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=83',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=84',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=85',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=86',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=87',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=88',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=89',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=90',
-    'https://sanand0.github.io/tdsdata/js_table/?seed=91'
-  ];
 
-  for (const url of urls) {
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'networkidle' }); // Wait for dynamic tables to load
+  const seeds = [82,83,84,85,86,87,88,89,90,91];
+  
+  for (const seed of seeds) {
+    await page.goto(`https://sanand0.github.io/tdsdata/js_table/?seed=${seed}`);
+    await page.waitForSelector('table');
+    await page.waitForTimeout(3000);  // Extra wait for JS load
     
-    // Find all table cells and extract numbers
-    const numbers = await page.$$eval('table td, table th', elements => 
-      elements.flatMap(el => {
-        const text = el.textContent.trim();
-        const num = parseFloat(text);
-        return isNaN(num) ? [] : [num];
-      })
+    // Get ALL text from table cells, extract numbers recursively
+    const cellTexts = await page.$$eval('table td, table th', cells => 
+      cells.map(cell => cell.textContent || '').filter(text => text.trim())
     );
     
-    const pageSum = numbers.reduce((a, b) => a + b, 0);
-    grandTotal += pageSum;
+    // Extract all numbers from texts (handles spans, decimals)
+    const numbers = [];
+    const numRegex = /[-+]?\d*\.?\d+/g;
+    for (const text of cellTexts) {
+      const matches = text.match(numRegex);
+      if (matches) numbers.push(...matches.map(n => parseFloat(n)));
+    }
     
-    console.log(`Sum for ${url}: ${pageSum.toFixed(2)}`);
-    await page.close();
+    const seedSum = numbers.reduce((a, b) => a + b, 0);
+    grandTotal += seedSum;
+    console.log(`Seed ${seed} numbers count: ${numbers.length}, sum: ${seedSum.toFixed(2)}`);
   }
   
+  console.log(`GRAND TOTAL: ${grandTotal.toFixed(2)}`);
   await browser.close();
-  console.log(`GRAND TOTAL SUM OF ALL TABLES: ${grandTotal.toFixed(2)}`);
-  return grandTotal;
-}
-
-scrapeSums();
+})();
