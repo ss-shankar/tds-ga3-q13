@@ -1,6 +1,6 @@
 name: Scrape Table Sums
 
-on: [push]  # Runs on every push to test
+on: [push]
 
 jobs:
   scrape:
@@ -13,8 +13,8 @@ jobs:
         with:
           node-version: '20'
           
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies  # ← CHANGED: npm install instead of npm ci
+        run: npm install
         
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
