@@ -1,32 +1,19 @@
-name: Scrape Table Sums
+name: Table Scraper (21f2001400@ds.study.iitm.ac.in)
 
 on: [push]
 
 jobs:
   scrape:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          
-      - name: Install dependencies  # ← CHANGED: npm install instead of npm ci
-        run: npm install
-        
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-        
-      - name: Run scraper for 21f2001400@ds.study.iitm.ac.in
-        run: node scrape.js
+      - name: 21f2001400@ds.study.iitm.ac.in - Install Playwright
+        run: |
+          npm init -y
+          npm install playwright@latest
+          npx playwright install --with-deps
       
-      - name: Upload logs if failed
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: logs
-          path: |
-            **/*.log
-            playwright-report/
+      - name: 21f2001400@ds.study.iitm.ac.in - Run Scraper
+        run: node scrape.js
